@@ -7,18 +7,21 @@ from ..game import countries
 from ..game import repository as repo
 
 
-def _board_embed(title, rows):
-    """Build the shared 'who guessed what' board embed from repository rows."""
+def _board_embed(title, rows, public=False):
+    """Build the 'who guessed what' board embed. public=True hides countries to avoid spoilers."""
     embed = discord.Embed(title=title, colour=0x2ECC71)
     if not rows:
         embed.description = "No guesses yet — be the first!"
         return embed
     lines = []
     for i, row in enumerate(rows, 1):
-        flag = countries.flag_emoji(row["guess_iso"])
-        country = countries.get(row["guess_iso"])
-        name = country.name if country else row["guess_iso"]
-        lines.append(f"`{i:>2}` {flag} **{name}** — {row['score']} pts ({round(row['distance_km'])} km) · {row['display_name']}")
+        if public:
+            lines.append(f"`{i:>2}` {row['display_name']} — {row['score']} pts ({round(row['distance_km'])} km away)")
+        else:
+            flag = countries.flag_emoji(row["guess_iso"])
+            country = countries.get(row["guess_iso"])
+            name = country.name if country else row["guess_iso"]
+            lines.append(f"`{i:>2}` {flag} **{name}** — {row['score']} pts ({round(row['distance_km'])} km) · {row['display_name']}")
     embed.description = "\n".join(lines)
     return embed
 
@@ -62,12 +65,12 @@ class ConfirmGuess(discord.ui.View):
                 if existing_id:
                     try:
                         msg = await channel.fetch_message(existing_id)
-                        await msg.edit(embed=embed)
+                        await msg.edit(embed=_board_embed("Today's guesses so far", board_rows, public=True))
                     except discord.NotFound:
-                        msg = await channel.send(embed=embed)
+                        msg = await channel.send(embed=_board_embed("Today's guesses so far", board_rows, public=True))
                         self.cog._board_messages[self.puzzle_id] = msg.id
                 else:
-                    msg = await channel.send(embed=embed)
+                    msg = await channel.send(embed=_board_embed("Today's guesses so far", board_rows, public=True))
                     self.cog._board_messages[self.puzzle_id] = msg.id
         finally:
             conn.close()
