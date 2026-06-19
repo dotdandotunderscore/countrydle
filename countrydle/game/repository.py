@@ -182,12 +182,12 @@ def user_stats(conn, user_id):
 
 
 def board(conn, puzzle_id):
-    """Return all guesses for a puzzle, ranked by score then time, as dicts."""
+    """Return all guesses for a puzzle, ranked by score then distance, as dicts."""
     rows = conn.execute(
         """SELECT u.display_name, g.guess_iso, g.distance_km, g.score
            FROM guesses g JOIN users u ON u.user_id = g.user_id
            WHERE g.puzzle_id = ?
-           ORDER BY g.score DESC, g.created_at ASC""",
+           ORDER BY g.score DESC, g.distance_km ASC, g.created_at ASC""",
         (puzzle_id,),
     ).fetchall()
     return [dict(row) for row in rows]
