@@ -1,6 +1,7 @@
 import csv
 import random
 import re
+from concurrent.futures import ThreadPoolExecutor
 from functools import lru_cache
 from pathlib import Path
 
@@ -48,7 +49,18 @@ def qualify(candidate):
     return country_for(candidate["lat"], candidate["lon"])
 
 
-def gather(per_country=5, countries_per_run=50, fetch_limit=60, catalogue=None):
+def _fetch_for_category(args):
+    category, per_country, fetch_limit = args
+    passing = []
+    for candidate in fetch_candidates(category, limit=fetch_limit):
+        answer = qualify(candidate)
+        if answer:
+            passing.append((candidate, answer))
+    random.shuffle(passing)
+    return passing[:per_country]
+
+
+def gather(per_country=1, countries_per_run=10, fetch_limit=60, catalogue=None):
     """Sample qualified candidates from a balanced random subset of countries.
 
     Drawing from per-country categories and capping each country's contribution keeps
@@ -58,15 +70,9 @@ def gather(per_country=5, countries_per_run=50, fetch_limit=60, catalogue=None):
     catalogue = catalogue if catalogue is not None else _load_categories()
     selection = random.sample(catalogue, min(countries_per_run, len(catalogue)))
 
-    qualified = []
-    for _iso2, category in selection:
-        passing = []
-        for candidate in fetch_candidates(category, limit=fetch_limit):
-            answer = qualify(candidate)
-            if answer:
-                passing.append((candidate, answer))
-        random.shuffle(passing)
-        qualified.extend(passing[:per_country])
+    with ThreadPoolExecutor(max_workers=3) as pool:
+        batches = pool.map(_fetch_for_category, [(cat, per_country, fetch_limit) for _, cat in selection])
+    qualified = [item for batch in batches for item in batch]
 
     random.shuffle(qualified)
     seen_authors: set[str] = set()

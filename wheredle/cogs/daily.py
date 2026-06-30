@@ -1,3 +1,4 @@
+import asyncio
 import datetime
 import logging
 from zoneinfo import ZoneInfo
@@ -16,6 +17,29 @@ log = logging.getLogger("wheredle.daily")
 
 REPORT_EMOJI = "🚩"
 REPORT_THRESHOLD = 3  # distinct flag reactions that auto-void a puzzle
+
+
+class ConfirmWipe(discord.ui.View):
+    """Confirmation gate for /wipequeue — prevents accidental queue destruction."""
+
+    def __init__(self, cog, count):
+        super().__init__(timeout=30)
+        self.cog = cog
+        self.count = count
+
+    @discord.ui.button(label="Yes, wipe queue", style=discord.ButtonStyle.danger)
+    async def confirm(self, interaction, button):
+        conn = db.connect(self.cog.db_path)
+        try:
+            with conn:
+                conn.execute("DELETE FROM puzzles WHERE status='queued'")
+        finally:
+            conn.close()
+        await interaction.response.edit_message(content=f"Wiped {self.count} queued puzzle(s).", view=None)
+
+    @discord.ui.button(label="Cancel", style=discord.ButtonStyle.secondary)
+    async def cancel(self, interaction, button):
+        await interaction.response.edit_message(content="Cancelled.", view=None)
 
 
 class DailyCog(commands.Cog):
@@ -43,13 +67,13 @@ class DailyCog(commands.Cog):
     async def _before(self):
         await self.bot.wait_until_ready()
 
-    @tasks.loop(hours=168)  # weekly
+    @tasks.loop(hours=24)
     async def fetch_queue(self):
         """Top up the puzzle queue from Wikimedia Commons if it's running low."""
         conn = db.connect(self.db_path)
         try:
             queued = conn.execute("SELECT COUNT(*) FROM puzzles WHERE status='queued'").fetchone()[0]
-            if queued >= 50:
+            if queued >= 10:
                 log.info("fetch_queue: %d queued, skipping", queued)
                 return
             added = 0
@@ -153,6 +177,59 @@ class DailyCog(commands.Cog):
             await self._send_puzzle(channel, new, conn)
         finally:
             conn.close()
+
+    @app_commands.command(name="wipequeue", description="(admin) Delete all queued puzzles")
+    async def wipequeue(self, interaction):
+        if interaction.user.id not in self.admin_ids:
+            await interaction.response.send_message("Admins only.", ephemeral=True)
+            return
+        conn = db.connect(self.db_path)
+        try:
+            count = conn.execute("SELECT COUNT(*) FROM puzzles WHERE status='queued'").fetchone()[0]
+        finally:
+            conn.close()
+        if count == 0:
+            await interaction.response.send_message("No queued puzzles to wipe.", ephemeral=True)
+            return
+        view = ConfirmWipe(self, count)
+        await interaction.response.send_message(
+            f"This will permanently delete **{count} queued puzzle(s)**. Are you sure?",
+            view=view,
+            ephemeral=True,
+        )
+
+    @app_commands.command(name="fetchcandidates", description="(admin) Fetch new candidates from Wikimedia Commons")
+    @app_commands.describe(
+        countries_per_run="Number of countries to sample (default 50)",
+        per_country="Max candidates per country (default 5)",
+    )
+    async def fetchcandidates(self, interaction, countries_per_run: int = 50, per_country: int = 5):
+        if interaction.user.id not in self.admin_ids:
+            await interaction.response.send_message("Admins only.", ephemeral=True)
+            return
+        await interaction.response.defer(ephemeral=True)
+        loop = asyncio.get_running_loop()
+        try:
+            candidates = await loop.run_in_executor(
+                None, lambda: list(gather(per_country=per_country, countries_per_run=countries_per_run))
+            )
+            conn = db.connect(self.db_path)
+            try:
+                added = 0
+                with conn:
+                    for candidate, iso2 in candidates:
+                        if queue_candidate(conn, candidate, iso2):
+                            added += 1
+                queued = conn.execute("SELECT COUNT(*) FROM puzzles WHERE status='queued'").fetchone()[0]
+            finally:
+                conn.close()
+            await interaction.followup.send(
+                f"Done — added **{added}** new puzzle(s). **{queued}** queued total.",
+                ephemeral=True,
+            )
+        except Exception:
+            log.exception("fetchcandidates command failed")
+            await interaction.followup.send("Fetch failed — check the logs.", ephemeral=True)
 
     @commands.Cog.listener()
     async def on_raw_reaction_add(self, payload):

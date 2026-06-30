@@ -16,7 +16,7 @@ def _board_embed(title, rows, public=False):
     lines = []
     for i, row in enumerate(rows, 1):
         if public:
-            lines.append(f"`{i:>2}` {row['display_name']} — {row['score']} pts ({round(row['distance_km'])} km away)")
+            lines.append(f"`{i:>2}` {row['display_name']} — ||{row['score']} pts · {round(row['distance_km'])} km||")
         else:
             flag = countries.flag_emoji(row["guess_iso"])
             country = countries.get(row["guess_iso"])

@@ -1,4 +1,5 @@
 import re
+import time
 
 import requests
 
@@ -78,8 +79,17 @@ def fetch_candidates(category, limit=50, session=None):
     cont = {}
     yielded = 0
     while True:
-        response = session.get(API, params={**params, **cont}, timeout=(5,30))
-        response.raise_for_status()
+        for attempt in range(3):
+            response = session.get(API, params={**params, **cont}, timeout=(5, 30))
+            if response.status_code == 429:
+                wait = int(response.headers.get("Retry-After", 5))
+                time.sleep(wait)
+                continue
+            response.raise_for_status()
+            break
+        else:
+            return
+        time.sleep(0.4)  # stay well under 200 req/min per Wikimedia guidelines
         data = response.json()
         for page in data.get("query", {}).get("pages", {}).values():
             candidate = _extract(page)
