@@ -38,8 +38,10 @@ interaction layer itself is NOT unit-tested — no token in CI).
 - `wheredle/sourcing/commons.py` — MediaWiki API fetch, prefers object-location coords,
   attribution from extmetadata
 - `wheredle/sourcing/geocode.py` — offline reverse-geocode (coords → ISO2)
-- `wheredle/sourcing/candidates.py` — quality filters + queue; `DEFAULT_CATEGORIES` tuned to
-  landscape/nature/cityscape categories
+- `wheredle/sourcing/candidates.py` — quality filters + queue; `gather()` samples per-country
+  from `data/commons_categories.csv`, capped per country and drawn from a random subset of
+  nations each run so the queue is geographically balanced (the photo's own coordinate, not the
+  category, decides the answer)
 - `wheredle/sourcing/images.py` — download + downscale + strip EXIF + re-encode (kills GPS AND
   the Commons filename, which leaks the country in the URL)
 - `wheredle/cogs/guess.py` — `/guess` (autocomplete + one-shot confirm), `/results` (gated)
@@ -47,11 +49,14 @@ interaction layer itself is NOT unit-tested — no token in CI).
   🚩 report listener (auto-void at `REPORT_THRESHOLD = 3`)
 - `wheredle/cogs/stats.py` — `/leaderboard`, `/stats`, `/share`
 - `main.py` — builds bot, sets `bot.config`/`bot.db_path`, loads 3 cogs, syncs slash commands to guild
-- `scripts/` — `build_countries.py`, `fetch_candidates.py`, `init_db.py`, `set_live.py` (dev helper)
+- `scripts/` — `build_countries.py`, `build_commons_categories.py`, `fetch_candidates.py`,
+  `init_db.py`, `set_live.py` (dev helper)
 
 ## Key design decisions (already settled with the user)
-- **Photos:** Wikimedia Commons Featured/Quality-image categories only (community curation = zero
+- **Photos:** Wikimedia Commons Quality-image categories only (community curation = zero
   manual approval). Narrowed from the firehose after a dev run showed too much indoor/object junk.
+  Sampling later changed from global landscape/cityscape category dumps to per-country categories
+  with a per-country cap, to kill a heavy European bias in the queue.
 - **One guess/day, distance-scored.** Exact country = 100.
 - **Spoiler-safe + social:** you see nothing about others until your own guess is locked; then the
   full board (country + distance + score) opens via `/guess` reply and gated `/results`.

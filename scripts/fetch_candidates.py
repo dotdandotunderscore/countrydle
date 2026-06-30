@@ -11,11 +11,12 @@ from wheredle.sourcing.candidates import gather, queue_candidate
 
 def main():
     """Fetch Commons candidates, qualify them, and queue new ones into the puzzle pool."""
-    limit = int(sys.argv[1]) if len(sys.argv) > 1 else 25
+    countries_per_run = int(sys.argv[1]) if len(sys.argv) > 1 else 50
+    per_country = int(sys.argv[2]) if len(sys.argv) > 2 else 5
     config = Config.from_env()
     conn = init_db(config.database_path)
 
-    qualified = gather(limit_per_category=limit)
+    qualified = gather(per_country=per_country, countries_per_run=countries_per_run)
     added = 0
     with conn:
         for candidate, iso2 in qualified:

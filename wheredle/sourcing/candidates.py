@@ -1,9 +1,14 @@
+import csv
 import random
 import re
+from functools import lru_cache
+from pathlib import Path
 
 from ..game import countries
 from .commons import fetch_candidates
 from .geocode import country_for
+
+CATEGORIES_PATH = Path(__file__).resolve().parents[2] / "data" / "commons_categories.csv"
 
 MIN_WIDTH = 1920
 MIN_HEIGHT = 1080
@@ -17,12 +22,15 @@ BLOCK_RE = re.compile(
     re.I,
 )
 
-# Landscape/nature/cityscape categories — vetted to hold geotagged outdoor photos.
-DEFAULT_CATEGORIES = (
-    "Featured pictures of landscapes",
-    "Quality images of landscapes",
-    "Quality images of cityscapes",
-)
+
+@lru_cache(maxsize=1)
+def _load_categories(path=str(CATEGORIES_PATH)):
+    """Load the per-country sampling catalogue as a list of (iso2, category)."""
+    with open(path, newline="", encoding="utf-8") as handle:
+        return [
+            (row["iso2"].strip().upper(), row["category"].strip())
+            for row in csv.DictReader(handle)
+        ]
 
 
 def qualify(candidate):
@@ -40,14 +48,26 @@ def qualify(candidate):
     return country_for(candidate["lat"], candidate["lon"])
 
 
-def gather(limit_per_category=50, categories=DEFAULT_CATEGORIES):
-    """Fetch and qualify candidates across categories; return list of (candidate, iso2)."""
+def gather(per_country=5, countries_per_run=50, fetch_limit=60, catalogue=None):
+    """Sample qualified candidates from a balanced random subset of countries.
+
+    Drawing from per-country categories and capping each country's contribution keeps
+    any one region (historically Europe) from dominating the queue. The category only
+    decides where we look; each photo's own coordinate still decides the answer.
+    """
+    catalogue = catalogue if catalogue is not None else _load_categories()
+    selection = random.sample(catalogue, min(countries_per_run, len(catalogue)))
+
     qualified = []
-    for category in categories:
-        for candidate in fetch_candidates(category, limit=limit_per_category):
-            iso2 = qualify(candidate)
-            if iso2:
-                qualified.append((candidate, iso2))
+    for _iso2, category in selection:
+        passing = []
+        for candidate in fetch_candidates(category, limit=fetch_limit):
+            answer = qualify(candidate)
+            if answer:
+                passing.append((candidate, answer))
+        random.shuffle(passing)
+        qualified.extend(passing[:per_country])
+
     random.shuffle(qualified)
     seen_authors: set[str] = set()
     deduped = []

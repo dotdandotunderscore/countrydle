@@ -6,9 +6,10 @@ scored by how close their country is to the real one.
 
 ## Design at a glance
 
-- **Photos:** Wikimedia Commons *Featured pictures* + *Quality images* (community-vetted),
-  auto-filtered to those with a single, clean country location. Attribution is shown at reveal.
-- **One guess/day**, distance-scored: `score = round(100 · e^(−distance_km / 2000))`,
+- **Photos:** Wikimedia Commons *Quality images*, sampled per-country from a balanced random
+  subset of nations each run so no region dominates, then auto-filtered to those with a single,
+  clean country location. Attribution is shown at reveal.
+- **One guess/day**, distance-scored: `score = round(100 · e^(−distance_km / 4000))`,
   exact country = 100.
 - **Spoiler-safe + social:** you see nothing about others until your guess is locked; the
   instant you lock it, the full board (everyone's country + distance + score) opens to you
@@ -69,8 +70,9 @@ https://discord.com/oauth2/authorize?client_id=1517088110180171888&permissions=1
 python -m venv .venv && source .venv/bin/activate
 pip install -r requirements-dev.txt
 
-python scripts/build_countries.py   # writes data/countries.csv (needs internet, one-off)
-python -m pytest                     # run the test suite
+python scripts/build_countries.py            # writes data/countries.csv (needs internet, one-off)
+python scripts/build_commons_categories.py   # writes data/commons_categories.csv (needs internet, one-off)
+python -m pytest                             # run the test suite
 
 cp .env.example .env                 # then fill in DISCORD_TOKEN etc.
 python scripts/init_db.py            # create data/game.db

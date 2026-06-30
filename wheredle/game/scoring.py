@@ -3,7 +3,7 @@ import math
 EARTH_RADIUS_KM = 6371.0
 
 # Distance at which a guess decays to 100/e (~37) points. Larger = more forgiving.
-DECAY_KM = 2000.0
+DECAY_KM = 4000.0
 
 
 def haversine_km(lat1, lon1, lat2, lon2):
