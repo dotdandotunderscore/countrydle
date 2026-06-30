@@ -3,8 +3,8 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
-from countrydle.config import Config
-from countrydle.db import init_db
+from wheredle.config import Config
+from wheredle.db import init_db
 
 
 def main():

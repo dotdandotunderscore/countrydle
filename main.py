@@ -3,11 +3,11 @@ import logging
 import discord
 from discord.ext import commands
 
-from countrydle.config import Config
-from countrydle.db import init_db
+from wheredle.config import Config
+from wheredle.db import init_db
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(name)s %(message)s")
-log = logging.getLogger("countrydle")
+log = logging.getLogger("wheredle")
 
 
 def create_bot(config):
@@ -18,9 +18,9 @@ def create_bot(config):
     bot.db_path = config.database_path
 
     async def setup_hook():
-        await bot.load_extension("countrydle.cogs.guess")
-        await bot.load_extension("countrydle.cogs.daily")
-        await bot.load_extension("countrydle.cogs.stats")
+        await bot.load_extension("wheredle.cogs.guess")
+        await bot.load_extension("wheredle.cogs.daily")
+        await bot.load_extension("wheredle.cogs.stats")
         if config.guild_id:
             guild = discord.Object(id=config.guild_id)
             bot.tree.copy_global_to(guild=guild)

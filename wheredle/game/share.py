@@ -12,4 +12,4 @@ def score_square(score):
 def share_text(puzzle_date, score, distance_km, exact):
     """Build a Wordle-style shareable line that reveals the result but not the country."""
     detail = "🎯 exact!" if exact else f"{round(distance_km)} km off"
-    return f"🌍 Countrydle {puzzle_date}\n{score_square(score)} {score}/100 · {detail}"
+    return f"🌍 Wheredle {puzzle_date}\n{score_square(score)} {score}/100 · {detail}"

@@ -1,4 +1,4 @@
-from countrydle.game import countries
+from wheredle.game import countries
 
 
 def test_registry_loads_many_countries():

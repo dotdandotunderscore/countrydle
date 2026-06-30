@@ -4,9 +4,9 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
-from countrydle.config import Config
-from countrydle.db import connect
-from countrydle.game import repository as repo
+from wheredle.config import Config
+from wheredle.db import connect
+from wheredle.game import repository as repo
 
 
 def main():

@@ -1,12 +1,12 @@
-# Countrydle — Handoff
+# Wheredle — Handoff
 
 ## What this is
 A Discord bot running a daily "guess the country" game for a friend group (Wordle/Connections
 style). Each day it posts a striking, geotagged photo from Wikimedia Commons; players get **one**
 guess, scored by how close their country is to the real one.
 
-- **Repo:** https://github.com/dotdandotunderscore/countrydle (public, `main`)
-- **Local path:** `/Users/daniel.woods/Documents/extras/countrydle`
+- **Repo:** https://github.com/dotdandotunderscore/wheredle (public, `main`)
+- **Local path:** `/Users/daniel.woods/Documents/extras/wheredle`
 - **Design summary + setup:** see `README.md` in the repo (don't duplicate it).
 - **Stack:** Python 3.9, discord.py 2.x, SQLite. Target host: **Railway** (long-running worker).
 
@@ -26,26 +26,26 @@ The **next concrete task** is Phase 6: deploy to Railway. Before then, the user 
 All game logic is in pure, unit-tested modules; Discord cogs are thin wrappers (the Discord
 interaction layer itself is NOT unit-tested — no token in CI).
 
-- `countrydle/config.py` — env-driven `Config` dataclass
-- `countrydle/db.py` + `schema.sql` — SQLite (`users`, `puzzles`, `guesses`); `puzzles.message_id`
+- `wheredle/config.py` — env-driven `Config` dataclass
+- `wheredle/db.py` + `schema.sql` — SQLite (`users`, `puzzles`, `guesses`); `puzzles.message_id`
   added via an idempotent `_migrate()` in `init_db`
-- `countrydle/game/scoring.py` — haversine + `score_for_distance` (decay 2000 km, exact=100)
-- `countrydle/game/countries.py` — 244-country centroid registry, fuzzy `resolve()`,
+- `wheredle/game/scoring.py` — haversine + `score_for_distance` (decay 2000 km, exact=100)
+- `wheredle/game/countries.py` — 244-country centroid registry, fuzzy `resolve()`,
   `distance_between()`, `flag_emoji()`
-- `countrydle/game/repository.py` — **all stateful game logic**: guess recording (one-per-day via
+- `wheredle/game/repository.py` — **all stateful game logic**: guess recording (one-per-day via
   UNIQUE), board, `rotate_daily`, `void_live`, leaderboard, `current_streak`, `user_stats`
-- `countrydle/game/share.py` — Wordle-style spoiler-free share line
-- `countrydle/sourcing/commons.py` — MediaWiki API fetch, prefers object-location coords,
+- `wheredle/game/share.py` — Wordle-style spoiler-free share line
+- `wheredle/sourcing/commons.py` — MediaWiki API fetch, prefers object-location coords,
   attribution from extmetadata
-- `countrydle/sourcing/geocode.py` — offline reverse-geocode (coords → ISO2)
-- `countrydle/sourcing/candidates.py` — quality filters + queue; `DEFAULT_CATEGORIES` tuned to
+- `wheredle/sourcing/geocode.py` — offline reverse-geocode (coords → ISO2)
+- `wheredle/sourcing/candidates.py` — quality filters + queue; `DEFAULT_CATEGORIES` tuned to
   landscape/nature/cityscape categories
-- `countrydle/sourcing/images.py` — download + downscale + strip EXIF + re-encode (kills GPS AND
+- `wheredle/sourcing/images.py` — download + downscale + strip EXIF + re-encode (kills GPS AND
   the Commons filename, which leaks the country in the URL)
-- `countrydle/cogs/guess.py` — `/guess` (autocomplete + one-shot confirm), `/results` (gated)
-- `countrydle/cogs/daily.py` — `tasks.loop` daily post, reveal embed, `/postnow`, `/skip`,
+- `wheredle/cogs/guess.py` — `/guess` (autocomplete + one-shot confirm), `/results` (gated)
+- `wheredle/cogs/daily.py` — `tasks.loop` daily post, reveal embed, `/postnow`, `/skip`,
   🚩 report listener (auto-void at `REPORT_THRESHOLD = 3`)
-- `countrydle/cogs/stats.py` — `/leaderboard`, `/stats`, `/share`
+- `wheredle/cogs/stats.py` — `/leaderboard`, `/stats`, `/share`
 - `main.py` — builds bot, sets `bot.config`/`bot.db_path`, loads 3 cogs, syncs slash commands to guild
 - `scripts/` — `build_countries.py`, `fetch_candidates.py`, `init_db.py`, `set_live.py` (dev helper)
 

@@ -12,7 +12,7 @@ from ..game import repository as repo
 from ..sourcing.candidates import gather, queue_candidate
 from ..sourcing.images import fetch_clean_image
 
-log = logging.getLogger("countrydle.daily")
+log = logging.getLogger("wheredle.daily")
 
 REPORT_EMOJI = "🚩"
 REPORT_THRESHOLD = 3  # distinct flag reactions that auto-void a puzzle
@@ -89,7 +89,7 @@ class DailyCog(commands.Cog):
         """Download + clean the image, post the puzzle, and store its message id."""
         image = fetch_clean_image(puzzle["image_path"])
         embed = discord.Embed(
-            title="🌍 Today's Countrydle",
+            title="🌍 Today's Wheredle",
             description="Where on Earth was this taken? Use `/guess` — one guess only.",
             colour=0x3498DB,
         )

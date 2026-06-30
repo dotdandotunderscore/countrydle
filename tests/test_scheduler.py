@@ -1,7 +1,7 @@
 import pytest
 
-from countrydle.db import init_db
-from countrydle.game import repository as repo
+from wheredle.db import init_db
+from wheredle.game import repository as repo
 
 
 @pytest.fixture

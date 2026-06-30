@@ -1,4 +1,4 @@
-# Countrydle
+# Wheredle
 
 A daily "guess the country" Discord game for a group of friends. Each day the bot posts a
 striking, geotagged photograph sourced from Wikimedia Commons; players get **one** guess,

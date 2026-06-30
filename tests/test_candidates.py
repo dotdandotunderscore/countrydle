@@ -1,7 +1,7 @@
 import pytest
 
-from countrydle.sourcing import candidates
-from countrydle.sourcing.commons import _clean, _pick_coord
+from wheredle.sourcing import candidates
+from wheredle.sourcing.commons import _clean, _pick_coord
 
 
 def _candidate(**overrides):

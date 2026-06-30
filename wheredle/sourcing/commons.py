@@ -3,7 +3,7 @@ import re
 import requests
 
 API = "https://commons.wikimedia.org/w/api.php"
-USER_AGENT = "CountrydleBot/0.1 (daily geo-guessing Discord game; daniel.woods@infuse.it)"
+USER_AGENT = "WheredleBot/0.1 (daily geo-guessing Discord game; daniel.woods@infuse.it)"
 
 _TAG_RE = re.compile(r"<[^>]+>")
 

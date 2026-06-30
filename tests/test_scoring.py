@@ -1,4 +1,4 @@
-from countrydle.game.scoring import haversine_km, score_for_distance
+from wheredle.game.scoring import haversine_km, score_for_distance
 
 
 def test_haversine_known_distance():

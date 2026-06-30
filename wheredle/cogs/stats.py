@@ -16,7 +16,7 @@ class StatsCog(commands.Cog):
         self.bot = bot
         self.db_path = db_path
 
-    @app_commands.command(name="leaderboard", description="See the Countrydle rankings")
+    @app_commands.command(name="leaderboard", description="See the Wheredle rankings")
     @app_commands.describe(period="all-time (default) or this-week")
     @app_commands.choices(
         period=[
@@ -27,10 +27,10 @@ class StatsCog(commands.Cog):
     async def leaderboard(self, interaction, period: app_commands.Choice[str] = None):
         scope = period.value if period else "all"
         since = None
-        title = "🏆 Countrydle — All-time"
+        title = "🏆 Wheredle — All-time"
         if scope == "week":
             since = (datetime.date.today() - datetime.timedelta(days=7)).isoformat()
-            title = "🏆 Countrydle — Last 7 days"
+            title = "🏆 Wheredle — Last 7 days"
         conn = db.connect(self.db_path)
         try:
             rows = repo.leaderboard(conn, since=since)
@@ -48,7 +48,7 @@ class StatsCog(commands.Cog):
             embed.description = "\n".join(lines)
         await interaction.response.send_message(embed=embed)
 
-    @app_commands.command(name="stats", description="Your Countrydle stats (or another player's)")
+    @app_commands.command(name="stats", description="Your Wheredle stats (or another player's)")
     @app_commands.describe(user="Whose stats to show (defaults to you)")
     async def stats(self, interaction, user: discord.User = None):
         target = user or interaction.user
